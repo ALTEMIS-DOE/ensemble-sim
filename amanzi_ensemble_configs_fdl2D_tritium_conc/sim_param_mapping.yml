@@ -1,0 +1,35 @@
+"@Perm@":
+  low: 5e-12*0.1
+  high: 5e-12*10.0
+
+"@Por@":
+  low: 0.39*0.5
+  high: 0.39*1.2
+
+"@alpha@":
+  low: 4e-4*0.8
+  high: 4e-4*1.2
+
+"@sr@":
+  low: 0.1
+  high: 0.5
+
+"@m@":
+  low: 0.3
+  high: 0.6
+
+"@Rech_hist@":
+  low: 4.743e-6*0.1
+  high: 4.743e-6*5.0
+
+"@Rech_mid@":
+  low: 4.743e-6*0.1
+  high: 4.743e-6*5.0
+
+"@Rech_late@":
+  low: 4.743e-6*0.1
+  high: 4.743e-6*5.0
+
+"@seepage@":
+  low: 2.4411e-04*0.1
+  high: 2.4411e-04*10.0

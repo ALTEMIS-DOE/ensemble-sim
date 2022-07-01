@@ -61,7 +61,7 @@ def is_perm_possible(yaml_vals: dict, perm_key_list: list) -> bool:
     return False
 
 
-def get_config_list_util(yaml_vals: dict, num_sims: int, output_dir: str) -> List[dict]:
+def get_config_list_util(yaml_vals: dict, sims_offset: int, num_sims: int, output_dir: str) -> List[dict]:
     """ Returns the list of all configurations that are generated from the input variable maps.
     This is a utility function to the parent function that performs the necessary checks.
     
@@ -82,6 +82,7 @@ def get_config_list_util(yaml_vals: dict, num_sims: int, output_dir: str) -> Lis
     
     Args:
         yaml_vals (dict): The dictionary containing the input variable maps.
+        sims_offset (int): The serial number (sno) of the first simulation would be (sims_offset + 1).
         num_sims (int): Number of simulation configurations to generate.
         output_dir (str): Path to the output directory containing all the simulation subdirectories.
     
@@ -117,7 +118,7 @@ def get_config_list_util(yaml_vals: dict, num_sims: int, output_dir: str) -> Lis
         print("Processing CASE 1...")
         
         config_dict = dict()
-        sno = 0    # used for serializing each simulation parameter
+        sno = sims_offset + 1    # used for serializing each simulation parameter
         
         # iterating over range VARIABLES
         for dict_ki in dict_key_list:
@@ -156,9 +157,9 @@ def get_config_list_util(yaml_vals: dict, num_sims: int, output_dir: str) -> Lis
         if num_sims < 1:
             raise ValueError("Incorrect value for the number of simulations parameter.")
         
-        for i in range(num_sims):
-            config_dict_i = {"@serial_number@": i,
-                             "@sim_path@": os.path.join(output_dir, f"sim{i}")}
+        for sno in range(sims_offset+1, sims_offset+num_sims+1):
+            config_dict_i = {"@serial_number@": sno,
+                             "@sim_path@": os.path.join(output_dir, f"sim{sno}")}
             
             # setting all the values for the perm_key_list variables
             # in this case, there is just 1 value for each perm_key_list variable
@@ -178,7 +179,7 @@ def get_config_list_util(yaml_vals: dict, num_sims: int, output_dir: str) -> Lis
         ######
         print("Processing CASE 3...")
         
-        sno = 0
+        sno = sims_offset + 1    # used for serializing each simulation parameter
         config_dict_i = {"@serial_number@": sno,
                          "@sim_path@": os.path.join(output_dir, f"sim{sno}")}
         
@@ -213,11 +214,12 @@ def is_input_correctly_formatted(yaml_vals: dict) -> Tuple[bool, str]:
     return True, validity_msg
 
 
-def get_config_list(mapping_file: str, num_sims: int, output_dir: str) -> List[dict]:
+def get_config_list(mapping_file: str, sims_offset: int, num_sims: int, output_dir: str) -> List[dict]:
     """Checked the input variable maps and returns the list of all configurations that are generated from the input variable maps.
     
     Args:
         mapping_file (str): Path to the file that contains all the input variable maps.
+        sims_offset (int): The serial number (sno) of the first simulation would be (sims_offset + 1).
         num_sims (int): Number of simulation configurations to be generated.
         output_dir (str): Directory containing all the simulations subdirectories.
         
@@ -238,7 +240,12 @@ def get_config_list(mapping_file: str, num_sims: int, output_dir: str) -> List[d
     if is_input_valid:
         # Return the configurations if the input file is valid.
         print("YAML file is valid.")
-        return get_config_list_util(yaml_vals, num_sims, output_dir)
+        return get_config_list_util(
+            yaml_vals, 
+            sims_offset, 
+            num_sims, 
+            output_dir,
+        )
     else:
         raise ValueError(validity_msg)
 
