@@ -1,1 +1,0 @@
-Output Dir: /global/scratch/users/satyarth/Projects/ensemble_simulation_runs/ensemble_simulation_run1_fdl2d_tritium
