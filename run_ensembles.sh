@@ -32,7 +32,7 @@ echo "Number of simulations => $num_sims"
 ##########################
 # RUN ALL SIMULATIONS
 ##########################
-for (( n=0; n<$num_sims; n++ ));
+for (( n=1; n<($num_sims+1); n++ ));
 do
     cd ${output_path}/sim${n}
     rm -f run_amanzi.sh
