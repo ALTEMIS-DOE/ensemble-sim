@@ -7,6 +7,7 @@ sys.path.append(str(root))
 
 import os
 import yaml
+import shutil
 import argparse
 import numpy as np
 import pandas as pd
@@ -17,19 +18,13 @@ from src import variable_maps_parser as vmp
 
 parallel_function = Parallel(n_jobs=-1, verbose=5)
 
+PARAMS_CSV_FNAME = "sampled_params.csv"
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Main function to generate simulation input files.",
         fromfile_prefix_chars="@",  # helps read the arguments from a file.
-    )
-
-    parser.add_argument(
-        "-f",
-        "--input_format",
-        type=str,
-        default="xml",
-        help="Format of the input simulation file that will be generated.",
     )
     
     requiredNamed = parser.add_argument_group('required named arguments')
@@ -63,6 +58,20 @@ def parse_arguments():
         type=str,
         default=None,
         help="The output directory where the generated files are stored.",
+    )
+
+    parser.add_argument(
+        "-f",
+        "--input_format",
+        type=str,
+        default="xml",
+        help="Format of the input simulation file that will be generated.",
+    )
+
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Marking this flag will overwrite the existing simulations in the output directory.",
     )
 
     args, unknown = parser.parse_known_args()
@@ -108,26 +117,50 @@ def generate_input_configs(template_str: str, var_maps: dict, output_dir: str, t
 
 
 def main():
-    # Parsing commandline arguments
+    # --- Parsing commandline arguments and printing them to the console
     args = parse_arguments()
     print("--- Arguments ---")
     for k in args.__dict__:
         print(f"{k} => {args.__dict__[k]}")
+        
+    params_csv_path = os.path.join(args.output_dir, PARAMS_CSV_FNAME)
 
-    # Parsing Template data
+    # --- Checking if some simulations have already been generated
+    if args.overwrite:  # CASE A: force overwriting over previous simulations   
+        print("CASE A: Overwriting existing simulation configurations!")
+        shutil.rmtree(args.output_dir)    # delete the output dir
+        os.mkdir(args.output_dir)
+        existing_sims_last_sno = 0
+        params_df_old = pd.DataFrame(None)
+
+    elif not os.path.exists(params_csv_path):  # CASE B: no previous simulations
+        print("CASE B: Generating new simulation configurations!")
+        existing_sims_last_sno = 0
+        params_df_old = pd.DataFrame(None)
+
+    else:  # CASE C: extend after previous simulations
+        print("CASE C: Appending new simulation configurations to the existing ones!")
+        params_df_old = pd.read_csv(params_csv_path)
+        existing_sims_last_sno = int(params_df_old["@serial_number@"].iloc[-1])
+
+    # --- Parsing Template data
     with open(args.input_template, "r") as tpl_f:
         tpl_str = "".join(tpl_f.readlines())
 
-    # Parsing YAML file for variable maps
-    var_map_list = vmp.get_config_list(mapping_file=args.variable_mapping_file, 
-                                       num_sims=args.num_simulations, 
-                                       output_dir=args.output_dir)
+    # --- Parsing YAML file for variable maps
+    var_map_list = vmp.get_config_list(
+        mapping_file=args.variable_mapping_file,
+        sims_offset=existing_sims_last_sno,
+        num_sims=args.num_simulations,
+        output_dir=args.output_dir,
+    )
 
-    # Saving the randomly sampled parameters to a CSV
-    csv_path = os.path.join(args.output_dir, "sampled_params.csv")
-    pd.DataFrame(var_map_list).to_csv(csv_path, index=False)
+    # --- Saving the randomly sampled parameters to a CSV
+    params_df_new = pd.DataFrame(var_map_list)
+    params_df_combined = pd.concat([params_df_old, params_df_new], axis=0)
+    params_df_combined.to_csv(params_csv_path, index=False)
 
-    # Replacing values in the template file with the mappings - PARALLEL for all files
+    # --- Replacing values in the template file with the mappings - PARALLEL for all files
     parallel_function(
         delayed(generate_input_configs)(
             template_str=tpl_str,
