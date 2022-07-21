@@ -114,7 +114,7 @@ This `shared_files` directory must contain the following files:
 ---
 ## STEP 3: Update success status of the each simulation run
 
-[`update_simulation_success.py`](update_simulation_success.py) script is used to update the success status of each simulation in the `sampled_params.csv`. 
+[`update_simulation_success.py`](src/update_simulation_success.py) script is used to update the success status of each simulation in the `sampled_params.csv`. 
 `sampled_params.csv` is generated in the output directory after running the 'generate_input_files.py'.
 
 `update_simulation_success.py` script adds an additional column specifying the status for each row (simulation configuration).
